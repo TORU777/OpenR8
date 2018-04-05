@@ -1,6 +1,6 @@
 ﻿/*
 Copyright (c) 2004-2017 Open Robot Club. All rights reserved.
-FC2 library for R7.
+FC2 (FlyCapture2) library for R7.
 */
 
 
