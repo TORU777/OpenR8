@@ -1,5 +1,5 @@
 ﻿/*
-Copyright (c) 2004-2017 Open Robot Club. All rights reserved.
+Copyright (c) 2004-2018 Open Robot Club. All rights reserved.
 Basler library for R7.
 */
 
@@ -24,10 +24,7 @@ using namespace std;
 
 typedef struct {
 	unsigned int cameraSN;
-
-	void* handle;
-
-	
+	void *handle;
 	Mat grabbedImage;
 
 } Basler_t;
