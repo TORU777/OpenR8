@@ -1,0 +1,1 @@
+The Caffe sample files are too bug. Please download from demo url.

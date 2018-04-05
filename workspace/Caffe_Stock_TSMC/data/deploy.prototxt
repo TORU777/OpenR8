@@ -1,0 +1,91 @@
+name: "CaffeNet"
+input: "data"
+input_shape {
+  dim: 1
+  dim: 6
+}
+layer {
+  name: "fc1"
+  type: "InnerProduct"
+  bottom: "data"
+  top: "fc1"
+  inner_product_param {
+    num_output: 100
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "xavier"
+    }
+  }
+}
+
+
+layer {
+  name: "tanh1"
+  type: "TanH"
+  bottom: "fc1"
+  top: "fc1"
+}
+
+layer {
+  name: "fc2"
+  type: "InnerProduct"
+  bottom: "fc1"
+  top: "fc2"
+  inner_product_param {
+    num_output: 100
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "xavier"
+    }
+  }
+}
+
+layer {
+  name: "tanh2"
+  type: "TanH"
+  bottom: "fc2"
+  top: "fc2"
+}
+
+layer {
+  name: "fc3"
+  type: "InnerProduct"
+  bottom: "fc2"
+  top: "fc3"
+  inner_product_param {
+    num_output: 100
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "xavier"
+    }
+  }
+}
+
+layer {
+  name: "tanh3"
+  type: "TanH"
+  bottom: "fc3"
+  top: "fc3"
+}
+
+layer {
+  name: "fc4"
+  type: "InnerProduct"
+  bottom: "fc3"
+  top: "fc4"
+  inner_product_param {
+    num_output: 2
+  }
+}
+layer {
+  name: "prob1"
+  type: "Softmax"
+  bottom: "fc4"
+  top: "prob1"
+}
