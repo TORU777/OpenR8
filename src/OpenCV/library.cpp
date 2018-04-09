@@ -117,6 +117,56 @@ static int OpenCV_VideoCapture_Open(int r7Sn, int functionSn) {
 	return 1;
 }
 
+static int OpenCV_VideoCapture_SetResolution(int r7Sn, int functionSn) {
+	int res;
+	void *variableObject = NULL;
+	res = R7_GetVariableObject(r7Sn, functionSn, 1, &variableObject);
+	if (res <= 0) {
+		R7_Printf(r7Sn, "ERROR! R7_GetVariableObject = %d", res);
+		return -1;
+	}
+	if (variableObject == NULL) {
+		R7_Printf(r7Sn, "ERROR! variableObject == NULL");
+		return -2;
+	}
+
+	OpenCV_t *videoCapturePtr = ((OpenCV_t*)variableObject);
+
+	int frameWidth = 0;
+	int frameHeight = 0;
+
+	res = R7_GetVariableInt(r7Sn, functionSn, 2, &frameWidth);
+	if (res <= 0) {
+		R7_Printf(r7Sn, "ERROR! R7_GetVariableInt = %d", res);
+		return -3;
+	}
+	res = R7_GetVariableInt(r7Sn, functionSn, 3, &frameHeight);
+	if (res <= 0) {
+		R7_Printf(r7Sn, "ERROR! R7_GetVariableInt = %d", res);
+		return -3;
+	}
+
+	//R7_Printf(r7Sn, "frameWidth = %d\n", frameWidth);
+	//R7_Printf(r7Sn, "frameHeight = %d\n", frameHeight);
+
+	if (frameWidth < 0)
+	{
+		R7_Printf(r7Sn, "ERROR! frameWidth must be a positive value.\n");
+		return -3;
+	}
+	else if (frameHeight < 0)
+	{
+		R7_Printf(r7Sn, "ERROR! frameHeight must be a positive value.\n");
+		return -3;
+	}
+
+	// Set resolution of frame
+	videoCapturePtr->videoCapture->set(cv::CAP_PROP_FRAME_WIDTH, frameWidth);
+	videoCapturePtr->videoCapture->set(cv::CAP_PROP_FRAME_HEIGHT, frameHeight);
+
+	return 1;
+}
+
 static int OpenCV_VideoCapture_Grab(int r7Sn, int functionSn) {
 	int res;
 	void *variableObject = NULL;
@@ -174,6 +224,7 @@ R7_API int R7Library_Init(void) {
 	R7_RegisterFunction("OpenCV_VideoCapture_Grab", (R7Function_t)&OpenCV_VideoCapture_Grab);
 	R7_RegisterFunction("OpenCV_VideoCapture_Init", (R7Function_t)&OpenCV_VideoCapture_Init);
 	R7_RegisterFunction("OpenCV_VideoCapture_Open", (R7Function_t)&OpenCV_VideoCapture_Open);
+	R7_RegisterFunction("OpenCV_VideoCapture_SetResolution", (R7Function_t)&OpenCV_VideoCapture_SetResolution);
 	R7_RegisterFunction("OpenCV_VideoCapture_Release", (R7Function_t)&OpenCV_VideoCapture_Release);
 	R7_RegisterFunction("OpenCV_VideoCapture_Retrieve", (R7Function_t)&OpenCV_VideoCapture_Retrieve);
 		
@@ -268,6 +319,19 @@ R7_API int R7Library_GetSupportList(char *str, int strSize) {
 	json_object_set_new(functionObject, "variables", variableArray);
 	r7_AppendVariable(variableArray, "videoCaptureObject", "Object", "IN");
 	r7_AppendVariable(variableArray, "deviceNumber", "Int", "IN");
+
+	// OpenCV_VideoCapture_SetResolution
+	function = json_object();
+	functionObject = json_object();
+	json_object_set_new(function, "function", functionObject);
+	json_object_set_new(functionObject, "name", json_string("OpenCV_VideoCapture_SetResolution"));
+	json_object_set_new(functionObject, "doc", json_string(""));
+	json_array_append(functionArray, function);
+	variableArray = json_array();
+	json_object_set_new(functionObject, "variables", variableArray);
+	r7_AppendVariable(variableArray, "videoCaptureObject", "Object", "IN");
+	r7_AppendVariable(variableArray, "frameWidth", "Int", "IN");
+	r7_AppendVariable(variableArray, "frameHeight", "Int", "IN");
 
 	// OpenCV_VideoCapture_Release
 	function = json_object();
