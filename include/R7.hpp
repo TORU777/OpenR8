@@ -126,6 +126,9 @@ extern "C"
 
 	R7_API int R7_CheckSupportAVX2();
 
+	R7_API int R7_Login(char *buffer, int bufferLength, char *userName, char *password);
+	R7_API int R7_CheckLicense(char *licenseKey, int *year, int *month, int *day);
+
 #ifdef __cplusplus
 }
 #endif
