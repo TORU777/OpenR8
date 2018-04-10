@@ -129,6 +129,9 @@ extern "C"
 	R7_API int R7_Login(char *buffer, int bufferLength, char *userName, char *password);
 	R7_API int R7_CheckLicense(char *licenseKey, int *year, int *month, int *day);
 
+	R7_API int R7_Encode(unsigned char *data, int dataSize, unsigned char *key, int keyLength);
+	R7_API int R7_Decode(unsigned char *data, int dataSize, unsigned char *key, int keyLength);
+
 #ifdef __cplusplus
 }
 #endif
