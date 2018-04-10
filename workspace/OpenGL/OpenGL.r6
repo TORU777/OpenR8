@@ -1,18 +1,18 @@
 #!R7
 # -*- coding: utf-8 -*-
-# R7 version 18.15.0
+# R7 version 18.18.0
 <?xml version="1.0" encoding="utf-8"?>
 <program>
 <version>0.0.0</version>
-<functionSnMax>4</functionSnMax>
-<variableSnMax>15</variableSnMax>
-<functionSnCount>2</functionSnCount>
-<variableSnCount>15</variableSnCount>
+<functionSnMax>12</functionSnMax>
+<variableSnMax>16</variableSnMax>
+<functionSnCount>5</functionSnCount>
+<variableSnCount>16</variableSnCount>
 <functions>
 <function>
 <sn>2</sn>
 <name>OpenGL_NewWindow</name>
-<posY>2</posY>
+<posY>3</posY>
 <enable>1</enable>
 <remark></remark>
 <variableSn>10</variableSn>
@@ -24,6 +24,32 @@
 <posY>1</posY>
 <enable>1</enable>
 <remark></remark>
+</function>
+<function>
+<sn>5</sn>
+<name>OpenGL_ShowWindow</name>
+<posY>4</posY>
+<enable>1</enable>
+<remark></remark>
+<variableSn>10</variableSn>
+</function>
+<function>
+<sn>11</sn>
+<name>Image_Open</name>
+<posY>2</posY>
+<enable>1</enable>
+<remark></remark>
+<variableSn>16</variableSn>
+<variableSn>7</variableSn>
+</function>
+<function>
+<sn>12</sn>
+<name>OpenGL_ShowImage</name>
+<posY>5</posY>
+<enable>1</enable>
+<remark></remark>
+<variableSn>10</variableSn>
+<variableSn>7</variableSn>
 </function>
 </functions>
 <variables>
@@ -130,6 +156,13 @@
 <name>URL</name>
 <type>String</type>
 <value>http://www.google.com/</value>
+<remark></remark>
+</variable>
+<variable>
+<sn>16</sn>
+<name>imageFileName</name>
+<type>String</type>
+<value>test.png</value>
 <remark></remark>
 </variable>
 </variables>

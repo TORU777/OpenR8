@@ -15,6 +15,7 @@ OpenGL library for R7.
 using namespace std;
 using namespace cv;
 
+//Mat image;
 
 #ifdef __cplusplus
 extern "C"
@@ -47,21 +48,19 @@ extern "C"
 		printf("initializeGL ++\n");
 		//initializeOpenGLFunctions();
 		//printContextInformation();
-		/*
+		
 		// Load image from file
-		if (!image.load("image.png"))
-		{
-		//qDebug() << "load image fail";
-		return;
-		}
-		*/
+		//image = imread("test.png", CV_LOAD_IMAGE_COLOR);
+		
 		printf("initializeGL --\n");
 	}
 
 	void OpenGLWindow::paintGL() {
-		printf("paintGL ++");
+		printf("paintGL ++\n");
 
-		qWarning("OpenGLWindow::paintGL()");
+		//imshow("paint", image);
+
+		//qWarning("OpenGLWindow::paintGL()");
 
 		glClear(GL_COLOR_BUFFER_BIT);
 
@@ -80,6 +79,9 @@ extern "C"
 		// "Bind" the newly created texture : all future texture functions will modify this texture
 		glBindTexture(GL_TEXTURE_2D, textureID);
 
+		printf("image.cols = %d\n", image.cols);
+		printf("image.rows = %d\n", image.rows);
+
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.cols, image.rows, 0, 0x80E0, GL_UNSIGNED_BYTE, image.ptr());
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -97,7 +99,7 @@ extern "C"
 
 		glEnd();
 
-		printf("paintGL --");
+		printf("paintGL --\n");
 	}
 
 
@@ -136,6 +138,7 @@ extern "C"
 	static int _stdcall OpenGL_NewWindowCallback(void *data) {
 
 		printf("OpenGL_NewWindowCallback ++\n");
+
 		if (true) {
 			int r7Sn, functionSn;
 			int res;
@@ -164,7 +167,7 @@ extern "C"
 				format.setProfile(QSurfaceFormat::CoreProfile);
 				format.setVersion(3, 3);
 
-				openglPtr->openGLWindow->setFormat(format);
+				//openglPtr->openGLWindow->setFormat(format);
 
 
 				//qWarning("Line: %d", __LINE__);
@@ -172,15 +175,28 @@ extern "C"
 				//openglPtr->openGLWindow->image = imread("image.jpg", CV_LOAD_IMAGE_COLOR);
 				//openglPtr->openGLWindow->image = imread("test.png", CV_LOAD_IMAGE_COLOR);
 				openglPtr->openGLWindow->image = cv::Mat(cv::Size(500, 400), CV_8UC3, cv::Scalar(255, 0, 0));
-				printf("cols = %d, rows = %d\n", openglPtr->openGLWindow->image.cols, openglPtr->openGLWindow->image.rows);
+				//printf("cols = %d, rows = %d\n", openglPtr->openGLWindow->image.cols, openglPtr->openGLWindow->image.rows);
 
-				openglPtr->openGLWindow->resize(openglPtr->openGLWindow->image.cols, openglPtr->openGLWindow->image.rows);
+				//openglPtr->openGLWindow->resize(openglPtr->openGLWindow->image.cols, openglPtr->openGLWindow->image.rows);
+				//openglPtr->openGLWindow->resize(image.cols, image.rows);
 				printf("openglPtr->openGLWindow->setTitle \n");
 
-				//openglPtr->openGLWindow->setTitle("OpenGL Window");
-				printf("openglPtr->openGLWindow->show \n");
-				openglPtr->openGLWindow->show();
-				printf("openglPtr->openGLWindow->show OK\n");
+				char command[R7_STRING_SIZE];
+				command[0] = '\0';
+
+				res = R7_GetVariableString(r7Sn, functionSn, 2, command, R7_STRING_SIZE);
+				if (res <= 0) {
+					R7_Printf(r7Sn, "ERROR! R7_GetVariableString = %d", res);
+					return -4;
+				}
+
+				int strSize = (int)(strlen(command));
+
+				command[strSize] = '\0';
+
+
+				openglPtr->openGLWindow->setTitle(command);
+
 				//system("PAUSE");
 				//openglPtr->openGLWindow->update();
 			}
@@ -242,14 +258,14 @@ extern "C"
 		cbPtr->functionSn = functionSn;
 
 		int res;
-		void *variableObject = NULL;
+		//void *variableObject = NULL;
 		res = R7_InitVariableObject(r7Sn, functionSn, 1, sizeof(OpenGL_t));
 		if (res <= 0) {
 			R7_Printf(r7Sn, "ERROR! R7_InitVariableObject = %d", res);
 			return -1;
 		}
 
-		res = R7_GetVariableObject(r7Sn, functionSn, 1, &variableObject);
+		//res = R7_GetVariableObject(r7Sn, functionSn, 1, &variableObject);
 
 		//OpenGL_t *openglPtr = ((OpenGL_t*)variableObject);
 		//openglPtr->openGLWindow = new OpenGLWindow();
@@ -267,6 +283,34 @@ extern "C"
 		return 1;
 	}
 
+	static int _stdcall OpenGL_ShowWindowCallback(void *data) {
+
+		int r7Sn, functionSn;
+		int res;
+		void *variableObject = NULL;
+		OpenGLCallBack_t *cbPtr = ((OpenGLCallBack_t *)data);
+		r7Sn = cbPtr->r7Sn;
+		functionSn = cbPtr->functionSn;
+
+		res = R7_GetVariableObject(r7Sn, functionSn, 1, &variableObject);
+		if (res <= 0) {
+			R7_Printf(r7Sn, "ERROR! R7_GetVariableObject = %d", res);
+			return -2;
+		}
+
+		OpenGL_t *openglPtr = ((OpenGL_t*)variableObject);
+
+		printf("resize(%d, %d) \n", openglPtr->openGLWindow->image.cols, openglPtr->openGLWindow->image.rows);
+
+		openglPtr->openGLWindow->resize(openglPtr->openGLWindow->image.cols, openglPtr->openGLWindow->image.rows);
+
+		printf("openglPtr->openGLWindow->show \n");
+		openglPtr->openGLWindow->show();
+		printf("openglPtr->openGLWindow->show OK\n");
+
+		return 1;
+	}
+
 	static int OpenGL_ShowWindow(int r7Sn, int functionSn) {
 		//test
 		//int argc = 0;
@@ -277,16 +321,104 @@ extern "C"
 		//openGLWindow->resize(500, 500);
 		//openGLWindow->show();
 		//app->exec();
+
+		OpenGLCallBack_t *cbPtr = (OpenGLCallBack_t*)malloc(sizeof(OpenGLCallBack_t));
+
+		cbPtr->r7Sn = r7Sn;
+
+		cbPtr->functionSn = functionSn;
+
+		R7_QueueQtEvent((R7CallbackHandler)OpenGL_ShowWindowCallback, (void*)cbPtr);
+
+		return 1;
+	}
+
+	static int _stdcall OpenGL_HideWindowCallback(void *data) {
+
+		int r7Sn, functionSn;
+		int res;
+		void *variableObject = NULL;
+		OpenGLCallBack_t *cbPtr = ((OpenGLCallBack_t *)data);
+		r7Sn = cbPtr->r7Sn;
+		functionSn = cbPtr->functionSn;
+
+		res = R7_GetVariableObject(r7Sn, functionSn, 1, &variableObject);
+		if (res <= 0) {
+			R7_Printf(r7Sn, "ERROR! R7_GetVariableObject = %d", res);
+			return -2;
+		}
+
+		OpenGL_t *openglPtr = ((OpenGL_t*)variableObject);
+
+		openglPtr->openGLWindow->setVisible(false);
+
 		return 1;
 	}
 
 	static int OpenGL_HideWindow(int r7Sn, int functionSn) {
 
+		OpenGLCallBack_t *cbPtr = (OpenGLCallBack_t*)malloc(sizeof(OpenGLCallBack_t));
+
+		cbPtr->r7Sn = r7Sn;
+
+		cbPtr->functionSn = functionSn;
+
+		R7_QueueQtEvent((R7CallbackHandler)OpenGL_HideWindowCallback, (void*)cbPtr);
+
+		return 1;
+	}
+
+	static int _stdcall OpenGL_ShowImageCallback(void *data) {
+		printf("OpenGL_ShowImageCallback ++\n");
+
+		int r7Sn, functionSn;
+		int res;
+		void *variableObject = NULL;
+		OpenGLCallBack_t *cbPtr = ((OpenGLCallBack_t *)data);
+		r7Sn = cbPtr->r7Sn;
+		functionSn = cbPtr->functionSn;
+
+		res = R7_GetVariableObject(r7Sn, functionSn, 1, &variableObject);
+		if (res <= 0) {
+			R7_Printf(r7Sn, "ERROR! R7_GetVariableObject = %d", res);
+			return -2;
+		}
+
+		OpenGL_t *openglPtr = ((OpenGL_t*)variableObject);
+
+		Mat getImage;
+
+		res = R7_GetVariableMat(r7Sn, functionSn, 2, &getImage);
+		if (res <= 0) {
+			R7_Printf(r7Sn, "ERROR! R7_GetVariableObject = %d", res);
+			return -2;
+		}
+
+		openglPtr->openGLWindow->image = getImage.clone();
+		//image = getImage.clone();
+
+		//printf("openglPtr->openGLWindow->image.cols = %d\n", openglPtr->openGLWindow->image.cols);
+		//printf("openglPtr->openGLWindow->image.rows = %d\n", openglPtr->openGLWindow->image.rows);
+		openglPtr->openGLWindow->resize(openglPtr->openGLWindow->image.cols, openglPtr->openGLWindow->image.rows);
+
+		openglPtr->openGLWindow->update();
+
+		printf("OpenGL_ShowImageCallback --\n");
 		return 1;
 	}
 
 	static int OpenGL_ShowImage(int r7Sn, int functionSn) {
+		printf("OpenGL_ShowImage ++\n");
 
+		OpenGLCallBack_t *cbPtr = (OpenGLCallBack_t*)malloc(sizeof(OpenGLCallBack_t));
+
+		cbPtr->r7Sn = r7Sn;
+
+		cbPtr->functionSn = functionSn;
+
+		R7_QueueQtEvent((R7CallbackHandler)OpenGL_ShowImageCallback, (void*)cbPtr);
+
+		printf("OpenGL_ShowImage --\n");
 		return 1;
 	}
 
