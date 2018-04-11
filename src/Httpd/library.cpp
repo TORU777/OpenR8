@@ -206,17 +206,48 @@ extern "C"
 		printf("listen port = %d\n", httpdObject->port);
 
 		while (httpdObject->toStop == 0) {
-			SOCKET socketClient = accept(httpdObject->socketListen, NULL, NULL);
+			
+			SOCKET socketClient;
+			struct fd_set rfdsSocket;
+			struct timeval timeoutSocket = { httpdObject->timeout,0 };
 
-			if (socketClient == INVALID_SOCKET) {
-				R7_Printf(r7Sn, "accept failed with error: %d\n", WSAGetLastError());
-				closesocket(httpdObject->socketListen);
-				WSACleanup();
-				res = -1;
-				R7_SetVariableInt(r7Sn, functionSn, 1, res);
-				return res;
+			//select accept
+			while (1) {
+				FD_ZERO(&rfdsSocket);
+				FD_SET(httpdObject->socketListen, &rfdsSocket);
+
+				//select return < 0 => select error.
+				//select return = 0 => select timeout.
+				res = select(0, &rfdsSocket, NULL, NULL, &timeoutSocket);
+				
+				if (0 > res) {
+					R7_Printf(r7Sn, "select accept failed.\n");
+					closesocket(httpdObject->socketListen);
+					WSACleanup();
+					res = -1;
+					R7_SetVariableInt(r7Sn, functionSn, 1, res);
+					return res;
+				}
+				else if (0 == res) {
+					continue;
+				}
+				else {
+					if (FD_ISSET(httpdObject->socketListen, &rfdsSocket)) {
+						//recv get data.
+						socketClient = accept(httpdObject->socketListen, NULL, NULL);
+						if (socketClient == INVALID_SOCKET) {
+							R7_Printf(r7Sn, "accept failed with error: %d\n", WSAGetLastError());
+							closesocket(httpdObject->socketListen);
+							WSACleanup();
+							res = -1;
+							R7_SetVariableInt(r7Sn, functionSn, 1, res);
+							return res;
+						}
+						break;
+					}
+				}
 			}
-
+			
 			printf("accept\n");
 			printf("timeout set = %d\n", httpdObject->timeout);
 
@@ -309,10 +340,14 @@ extern "C"
 							}
 							else if (res == 0) {
 								R7_Printf(r7Sn, "recv close.\n");
-								free(httpData);
-								closesocket(socketClient);
-								printf("close socketClient!\n");
-								continue;
+								//free(httpData);
+								//closesocket(socketClient);
+								//printf("close socketClient!\n");
+								//continue;
+								
+								//temporarily break
+								res = -1;
+								break;
 							}
 					}
 				}
