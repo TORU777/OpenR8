@@ -1,13 +1,13 @@
 #!R7
 # -*- coding: utf-8 -*-
-# R7 version 18.16.0
+# R7 version 18.18.0
 <?xml version="1.0" encoding="utf-8"?>
 <program>
 <version>0.0.0</version>
 <functionSnMax>3</functionSnMax>
-<variableSnMax>6</variableSnMax>
+<variableSnMax>7</variableSnMax>
 <functionSnCount>3</functionSnCount>
-<variableSnCount>6</variableSnCount>
+<variableSnCount>7</variableSnCount>
 <functions>
 <function>
 <sn>1</sn>
@@ -30,6 +30,7 @@
 <variableSn>4</variableSn>
 <variableSn>5</variableSn>
 <variableSn>6</variableSn>
+<variableSn>7</variableSn>
 </function>
 <function>
 <sn>3</sn>
@@ -82,6 +83,13 @@
 <name>backlogNum</name>
 <type>Int</type>
 <value>1024</value>
+<remark></remark>
+</variable>
+<variable>
+<sn>7</sn>
+<name>timeout</name>
+<type>Int</type>
+<value>3</value>
 <remark></remark>
 </variable>
 </variables>

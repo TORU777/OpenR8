@@ -1,4 +1,4 @@
-/*
+ï»¿/*
 Copyright (c) 2004-2018 Open Robot Club. All rights reserved.
 Httpd library for R7.
 */
@@ -26,6 +26,7 @@ typedef struct {
 	int threadNum;
 	int backlogNum;
 	int toStop;
+	int timeout;
 	std::map<QString, QString> *mapHeader;
 } HttpdObject_t;
 
@@ -62,6 +63,7 @@ extern "C"
 		httpdObject->threadNum = 1024;
 		httpdObject->backlogNum = 1024;
 		httpdObject->toStop = 0;
+		httpdObject->timeout = 3;
 		httpdObject->mapHeader = new std::map<QString, QString>();
 		
 		R7_SetVariableInt(r7Sn, functionSn, 1, result);
@@ -91,6 +93,7 @@ extern "C"
 
 		R7_GetVariableInt(r7Sn, functionSn, 5, &httpdObject->threadNum);
 		R7_GetVariableInt(r7Sn, functionSn, 6, &httpdObject->backlogNum);
+		R7_GetVariableInt(r7Sn, functionSn, 7, &httpdObject->timeout);
 		R7_SetVariableInt(r7Sn, functionSn, 1, result);
 		R7_SetVariableObject(r7Sn, functionSn, 2, httpdObject);
 		free(httpdObject->documentRoot);
@@ -215,6 +218,7 @@ extern "C"
 			}
 
 			printf("accept\n");
+			printf("timeout set = %d\n", httpdObject->timeout);
 
 			if (httpdObject->toStop != 0) {
 				break;
@@ -222,63 +226,104 @@ extern "C"
 
 			// TODO: Read -> print
 			//ouyput binary
-			
+
 			char recvBuf[R7_STRING_SIZE];
 			char *httpData = NULL;
 			char httpDataSize = 0;
 			int httpDataLength = 0;
 			int httpDataLengthNew = 0;
 			int httpDataTotalLength = 0;
-			
-			while ((res = recv(socketClient, recvBuf, R7_STRING_SIZE, 0)) > 0) {
-				//printf("res = %d\n", res);
-				//printf("recvBuf =%s\n", recvBuf);
-				
-				httpDataLengthNew = httpDataLength + res;
+			//use select.
+			struct fd_set rfds;
+			struct timeval timeout = { httpdObject->timeout,0 };
 
-				if (httpDataLengthNew > httpDataSize) {
-					char* buf = httpData;
-					httpData = (char *)malloc(httpDataLengthNew);
-					if (httpData == NULL) {
-						printf("httpData == NULL!\n");
-						return -1;
-					}
+			while (1) {
+				FD_ZERO(&rfds);
+				FD_SET(socketClient, &rfds);
 
-					if (httpDataLength > 0) {
-						memcpy(httpData, buf, httpDataLength);
-					}
-					else if (httpDataLength == 0) {//first time to find total size.
-						// TODO: ¦³ªº¨S¦³¶Ç³o­Ó¸ê®Æ
-						// TODO: string to QString
-						// TODO: ¥i¯à¨S¦³ Content-Length:
-						QString httpFindContentLength = QString::fromUtf8(recvBuf, R7_STRING_SIZE);
-						int contentLengthStart = (int)httpFindContentLength.indexOf("Content-Length: ", 0);
-						int contentLengthEnd = (int)httpFindContentLength.indexOf("\r\n", contentLengthStart);
-						int contentLength = httpFindContentLength.mid(contentLengthStart + (int)strlen("Content-Length: "), contentLengthEnd - contentLengthStart - (int)strlen("Content-Length: ")).toInt();
-						//printf("contentLength = %d\n", contentLength);
-						
-						int headerLength = (int)httpFindContentLength.indexOf("\r\n\r\n", 0) + (int)strlen("\r\n\r\n");
-						httpDataTotalLength = contentLength + headerLength;
-					}
-
-					memcpy(httpData + httpDataLength, recvBuf, res);
-
-					free(buf);
-				}
-
-				httpDataLength += res;
-				
-				if (httpDataLength >= httpDataTotalLength) { // TODO httpd 
-					//printf("resRecv = %d\n", res);
-					//free(recvBuf);
-					printf("braek!\n");
+				//select return < 0 => select error.
+				//select return = 0 => select timeout.
+				res = select(0, &rfds, NULL, NULL, &timeout);
+				printf("select res = %d\n", res);
+				if (0 > res) {
 					break;
 				}
+				else if (0 == res) {
+					break;
+				}
+				else {
+					if (FD_ISSET(socketClient, &rfds)) {
+						//recv get data.
+						if ((res = recv(socketClient, recvBuf, R7_STRING_SIZE, 0)) > 0) {
+								//printf("res = %d\n", res);
+								//printf("recvBuf =%s\n", recvBuf);
+								
+								httpDataLengthNew = httpDataLength + res;
+
+								if (httpDataLengthNew > httpDataSize) {
+									char* buf = httpData;
+									httpData = (char *)malloc(httpDataLengthNew);
+									if (httpData == NULL) {
+										printf("httpData == NULL!\n");
+										return -1;
+									}
+
+									if (httpDataLength > 0) {
+										memcpy(httpData, buf, httpDataLength);
+									}
+									else if (httpDataLength == 0) {//first time to find total size.
+										// TODO: æœ‰çš„æ²’æœ‰å‚³é€™å€‹è³‡æ–™
+										// TODO: string to QString
+										// TODO: å¯èƒ½æ²’æœ‰ Content-Length:
+										QString httpFindContentLength = QString::fromUtf8(recvBuf, R7_STRING_SIZE);
+										int contentLengthStart = (int)httpFindContentLength.indexOf("Content-Length: ", 0);
+										int contentLengthEnd = (int)httpFindContentLength.indexOf("\r\n", contentLengthStart);
+										int contentLength = httpFindContentLength.mid(contentLengthStart + (int)strlen("Content-Length: "), contentLengthEnd - contentLengthStart - (int)strlen("Content-Length: ")).toInt();
+										//printf("contentLength = %d\n", contentLength);
+										
+										int headerLength = (int)httpFindContentLength.indexOf("\r\n\r\n", 0) + (int)strlen("\r\n\r\n");
+										httpDataTotalLength = contentLength + headerLength;
+									}
+
+									memcpy(httpData + httpDataLength, recvBuf, res);
+
+									free(buf);
+								}
+
+								httpDataLength += res;
+								
+								if (httpDataLength >= httpDataTotalLength) { // TODO httpd 
+									//printf("resRecv = %d\n", res);
+									//free(recvBuf);
+									printf("braek!\n");
+									break;
+								}
+							}
+							if (res < 0) {
+								R7_Printf(r7Sn, "recv fail\n");
+								R7_SetVariableInt(r7Sn, functionSn, 1, res);
+								closesocket(socketClient);
+								closesocket(httpdObject->socketListen);
+								WSACleanup();
+								return -2;
+							}
+							else if (res == 0) {
+								R7_Printf(r7Sn, "recv close.\n");
+								free(httpData);
+								closesocket(socketClient);
+								printf("close socketClient!\n");
+								continue;
+							}
+					}
+				}
 			}
+
+			//selcet < 0.
 			if (res < 0) {
-				R7_Printf(r7Sn, "recv fail");
-				R7_SetVariableInt(r7Sn, functionSn, 1, res);
-				return -2;
+				free(httpData);
+				closesocket(socketClient);
+				printf("close socketClient!\n");
+				continue;
 			}
 
 			// TODO: Parse http header
@@ -314,6 +359,7 @@ extern "C"
 					qstr.clear();
 					free(httpData);
 					closesocket(socketClient);
+					printf("close socketClient!\n");
 					continue;
 				}
 				else {
@@ -327,7 +373,13 @@ extern "C"
 			strValue = headerData.mid(first, end);
 			(*httpdObject->mapHeader)[strKey] = strValue;
 
-			
+			//save path.
+			if (testGet) {
+				first = strValue.indexOf("GET /", 0);
+				end = strValue.lastIndexOf(" ");
+				(*httpdObject->mapHeader)["Path"] = strValue.mid(first + (int)strlen("GET "), end - first - (int)strlen("GET "));
+			}
+
 			int lineCount = 1;
 
 			while (1) {
@@ -341,9 +393,6 @@ extern "C"
 
 				strKey = headerLineData.mid(0, findKey);
 				strValue = headerLineData.mid(findKey + (int)strlen(": "));
-
-				//printf("strKey =%s\n", strKey.toUtf8().data());
-				//printf("strValue =%s\n", strValue.toUtf8().data());
 
 				(*httpdObject->mapHeader)[strKey] = strValue;
 				
@@ -370,6 +419,7 @@ extern "C"
 					qstr.clear();
 					free(httpData);
 					closesocket(socketClient);
+					printf("close socketClient!\n");
 					continue;
 				}
 
@@ -499,14 +549,14 @@ extern "C"
 					R7_Printf(r7Sn, "hOutputFile INVALID_HANDLE_VALUE!\n");
 					CloseHandle(file);
 
-					send(socketClient, "HTTP / 1.1 404 Not Found\r\nContent-type: text/html; charset=utf-8\r\n\r\n", 70, 0);
-					//test
-					send(socketClient, "404 Not Found!<br>No file found!<br>", 34, 0);
+					send(socketClient, "HTTP/1.1 404 Not Found\r\nConnection: close\r\nContent-type: text/html; charset=utf-8\r\n\r\n", 87, 0);
+					send(socketClient, "404 Not Found!<br>No file found!<br>", 38, 0);
 
 					qstr.clear();
 					qstrWorkSpacePath.clear();
 					free(httpData);
 					closesocket(socketClient);
+					printf("close socketClient!\n");
 					continue;
 				}
 
@@ -561,8 +611,8 @@ extern "C"
 					sprintf(httpContentTypBuffer, "Content-type: text/html; charset=utf-8");
 				}
 
-				sprintf(httpSendBuffer, "HTTP / 1.1 200 OK\r\n%s\r\n\r\n", httpContentTypBuffer);
-
+				sprintf(httpSendBuffer, "HTTP/1.1 200 OK\r\nConnection: close\r\n%s\r\n\r\n", httpContentTypBuffer);
+				
 				send(socketClient, httpSendBuffer, (int)strlen(httpSendBuffer), 0);
 				send(socketClient, fileBuffer, (int)fileSize, 0);
 
@@ -573,6 +623,7 @@ extern "C"
 			qstrWorkSpacePath.clear();
 			free(httpData);
 			closesocket(socketClient);
+			printf("close socketClient!\n");
 		}
 
 		R7_SetVariableInt(r7Sn, functionSn, 1, res);
@@ -731,6 +782,14 @@ extern "C"
 		variable = json_object();
 		json_object_set_new(variable, "variable", variableObject);
 		json_object_set_new(variableObject, "name", json_string("backlogNum"));
+		json_object_set_new(variableObject, "type", json_string("Int"));
+		json_object_set_new(variableObject, "direction", json_string("IN"));
+		json_array_append(variableArray, variable);
+
+		variableObject = json_object();
+		variable = json_object();
+		json_object_set_new(variable, "variable", variableObject);
+		json_object_set_new(variableObject, "name", json_string("timeout"));
 		json_object_set_new(variableObject, "type", json_string("Int"));
 		json_object_set_new(variableObject, "direction", json_string("IN"));
 		json_array_append(variableArray, variable);
