@@ -4,9 +4,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <program>
 <version>0.0.0</version>
-<functionSnMax>12</functionSnMax>
+<functionSnMax>14</functionSnMax>
 <variableSnMax>16</variableSnMax>
-<functionSnCount>5</functionSnCount>
+<functionSnCount>7</functionSnCount>
 <variableSnCount>16</variableSnCount>
 <functions>
 <function>
@@ -49,6 +49,23 @@
 <enable>1</enable>
 <remark></remark>
 <variableSn>10</variableSn>
+<variableSn>7</variableSn>
+</function>
+<function>
+<sn>13</sn>
+<name>OpenGL_GetImage</name>
+<posY>6</posY>
+<enable>1</enable>
+<remark></remark>
+<variableSn>10</variableSn>
+<variableSn>7</variableSn>
+</function>
+<function>
+<sn>14</sn>
+<name>Debug_Image</name>
+<posY>7</posY>
+<enable>1</enable>
+<remark></remark>
 <variableSn>7</variableSn>
 </function>
 </functions>

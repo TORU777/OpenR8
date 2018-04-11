@@ -15,7 +15,6 @@ OpenGL library for R7.
 using namespace std;
 using namespace cv;
 
-//Mat image;
 
 #ifdef __cplusplus
 extern "C"
@@ -31,6 +30,7 @@ extern "C"
 	public:
 		OpenGLWindow();
 		Mat image;
+		Mat screenshot;
 		//QImage image;
 
 	protected:
@@ -422,7 +422,58 @@ extern "C"
 		return 1;
 	}
 
+	static int _stdcall OpenGL_GetImageCallback(void *data) {
+
+		int r7Sn, functionSn;
+		int res;
+		void *variableObject = NULL;
+		OpenGLCallBack_t *cbPtr = ((OpenGLCallBack_t *)data);
+		r7Sn = cbPtr->r7Sn;
+		functionSn = cbPtr->functionSn;
+
+		res = R7_GetVariableObject(r7Sn, functionSn, 1, &variableObject);
+		if (res <= 0) {
+			R7_Printf(r7Sn, "ERROR! R7_GetVariableObject = %d", res);
+			return -2;
+		}
+
+		OpenGL_t *openglPtr = ((OpenGL_t*)variableObject);
+
+		//--- screenshot
+		//Mat img(outputImage.size().height, outputImage.size().width, CV_8UC3);
+		Mat img(openglPtr->openGLWindow->image.rows, openglPtr->openGLWindow->image.cols, CV_8UC3);
+
+		Mat img_flipped;
+
+		//--- Read gl front buffer
+		glReadBuffer(GL_FRONT);
+		//glReadBuffer( GL_BACK_LEFT );
+
+		//use fast 4-byte alignment (default anyway) if possible
+		glPixelStorei(GL_PACK_ALIGNMENT, (img.step & 3) ? 1 : 4);
+
+		//set length of one complete row in destination data (doesn't need to equal img.cols)
+		glPixelStorei(GL_PACK_ROW_LENGTH, img.step / img.elemSize());
+
+		glReadPixels(0, 0, img.cols, img.rows, GL_BGR_EXT, GL_UNSIGNED_BYTE, img.data);
+
+		cv::flip(img, img_flipped, 0);
+
+		//cv::imwrite("debug.png", img_flipped);
+		openglPtr->openGLWindow->screenshot = img_flipped.clone();
+
+		return 1;
+	}
+
 	static int OpenGL_GetImage(int r7Sn, int functionSn) {
+
+		OpenGLCallBack_t *cbPtr = (OpenGLCallBack_t*)malloc(sizeof(OpenGLCallBack_t));
+
+		cbPtr->r7Sn = r7Sn;
+
+		cbPtr->functionSn = functionSn;
+
+		R7_QueueQtEvent((R7CallbackHandler)OpenGL_GetImageCallback, (void*)cbPtr);
 
 		return 1;
 	}
