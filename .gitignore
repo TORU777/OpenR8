@@ -26,6 +26,7 @@ bld/
 
 library/Caffe/
 library/Caffe-disabled/
+library/A16/
 
 R7.log
 R8.log
