@@ -120,10 +120,10 @@ extern "C"
 
 		HttpdObject_t *httpdObject = ((HttpdObject_t*)variableObject);
 
-		/*QString qstrWorkSpacePath;
-		QDir dir;
-		qstrWorkSpacePath = dir.currentPath();
-		printf("path =%s\n", qstrWorkSpacePath.toUtf8().data());*/
+		//QString qstrWorkSpacePath;
+		//QDir dir;
+		//qstrWorkSpacePath = dir.currentPath();
+		//printf("path =%s\n", qstrWorkSpacePath.toUtf8().data());
 
 		QString qstrDocumentRoot = QString::fromUtf8(httpdObject->documentRoot);
 		//printf("httpdObject->documentRoot =%s\n", qstrDocumentRoot.toUtf8().data());
@@ -219,7 +219,8 @@ extern "C"
 				//select return < 0 => select error.
 				//select return = 0 => select timeout.
 				res = select(0, &rfdsSocket, NULL, NULL, &timeoutSocket);
-				
+				printf("select accept = %d\n", res);
+
 				if (0 > res) {
 					R7_Printf(r7Sn, "select accept failed.\n");
 					closesocket(httpdObject->socketListen);
@@ -248,7 +249,7 @@ extern "C"
 				}
 			}
 			
-			printf("accept\n");
+			printf("accept.\n");
 			printf("timeout set = %d\n", httpdObject->timeout);
 
 			if (httpdObject->toStop != 0) {
@@ -275,7 +276,7 @@ extern "C"
 				//select return < 0 => select error.
 				//select return = 0 => select timeout.
 				res = select(0, &rfds, NULL, NULL, &timeout);
-				printf("select res = %d\n", res);
+				//printf("select res = %d\n", res);
 				if (0 > res) {
 					break;
 				}
@@ -372,7 +373,7 @@ extern "C"
 			qstr = QString::fromUtf8(httpData, httpDataLength);
 			printf("String Length = %d\n", httpDataLength);
 			printf("QString Length =%d\n", qstr.length());
-			printf("****************************\n");
+			printf("----------------------------\n");
 
 			//test
 			bool testPost = false;
@@ -395,6 +396,7 @@ extern "C"
 					free(httpData);
 					closesocket(socketClient);
 					printf("close socketClient!\n");
+					printf("----------------------------\n");
 					continue;
 				}
 				else {
@@ -440,11 +442,16 @@ extern "C"
 				printf("strValue =%s\n", it->second.toUtf8().data());
 			}
 
-			printf("****************************************************\n");
+			printf("----------------------------\n");
 			// TODO: Write http header and context
 			
 			//Test Post
 			if (testPost) {
+				//-----A16 test
+				bool a16Post = false;
+				std::string dieSn;
+				std::string diePartSn;
+
 				//find webKitFormBoundary
 				first = qstr.indexOf("Content-Type: multipart/form-data; boundary=");
 				end = qstr.indexOf("\n", first);
@@ -492,6 +499,15 @@ extern "C"
 					
 						printf("stringName =%s\n", stringName.c_str());
 						printf("stringValue =%s\n", stringValue.c_str());
+
+						//-----A16 test
+						if (strcmp(stringName.c_str(), "dieSn") == 0) {
+							a16Post = true;
+							dieSn = stringValue;
+						}
+						else if (strcmp(stringName.c_str(), "diePartSn") == 0) {
+							diePartSn = stringValue;
+						}
 					}
 					else {//File
 						int pos = (int)getFileChar.find("Content-Disposition: form-data; name=\"", 0);
@@ -549,13 +565,95 @@ extern "C"
 								data[0] = stringfileData.c_str()[i];
 								WriteFile(hOutputFile, data, dwBytesToWrite, &dwBytesWrite, NULL);//debug
 							}
-
+							
 							CloseHandle(hOutputFile);
 						}
 					}
 
 					findFirstBoundaryPos = findNextBoundaryPos;
 				}
+
+				//A16 test
+				if (a16Post) {
+					char cmdCommand[R7_STRING_SIZE];
+					char tmpBuffer[R7_STRING_SIZE];
+					char popenBuffer[R7_STRING_SIZE];
+
+					//Bulid tmp file.
+					HANDLE hOutputFile = INVALID_HANDLE_VALUE;
+					DWORD dwBytesWrite, dwBytesToWrite;
+					dwBytesToWrite = DWORD(1);
+					dwBytesWrite = 0;
+					
+					if (true) {
+						char name[R7_STRING_SIZE];
+
+						sprintf(name, "D:\\A16\\20180411_A16_red_paper_sample\\settingFiles\\%s-%s.tmp", dieSn.c_str(), diePartSn.c_str());
+						
+						wchar_t nameW[R7_STRING_SIZE];
+						memset(nameW, 0, sizeof(wchar_t) * R7_STRING_SIZE);
+						MultiByteToWideChar(CP_UTF8, 0, name, -1, nameW, R7_STRING_SIZE * 2);
+
+						hOutputFile = CreateFile(nameW, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+						if (hOutputFile == INVALID_HANDLE_VALUE) {
+							R7_Printf(r7Sn, "hOutputFile INVALID_HANDLE_VALUE!\n");
+							CloseHandle(hOutputFile);
+							R7_SetVariableInt(r7Sn, functionSn, 1, -1);
+							closesocket(socketClient);
+							closesocket(httpdObject->socketListen);
+							WSACleanup();
+							return -1;
+						}
+					}
+
+					if (std::stoi(diePartSn) == 0) {
+						sprintf(tmpBuffer, "{\"variables\": [{\"variable\":{ \"name\": \"samplePath\",\"value\": \"..\\\\rawImage\\\\%s.raw\"}}]}", dieSn.c_str());
+					}
+					else {
+						sprintf(tmpBuffer, "{\"variables\": [{\"variable\":{ \"name\": \"samplePath\",\"value\": \"..\\\\rawImage\\\\%s_%s.raw\"}}]}", dieSn.c_str(), diePartSn.c_str());
+					}
+
+					char data[1];
+
+					for (int i = 0; i < (int)strlen(tmpBuffer); i++) {
+						data[0] = tmpBuffer[i];
+						WriteFile(hOutputFile, data, dwBytesToWrite, &dwBytesWrite, NULL);//debug
+					}
+
+					CloseHandle(hOutputFile);
+					
+					//cmd command.
+					if (std::stoi(diePartSn) == 0) {
+						sprintf(cmdCommand, "D:\\A16\\20180411_A16_red_paper_sample\\app\\R7.exe release D:\\A16\\20180411_A16_red_paper_sample\\settingFiles\\ recipe0.r6 %s-%s.tmp", dieSn.c_str(), diePartSn.c_str());
+					}
+					else {
+						sprintf(cmdCommand, "D:\\A16\\20180411_A16_red_paper_sample\\app_Caffe\\R7.exe release D:\\A16\\20180411_A16_red_paper_sample\\settingFiles\\ recipe1.r6 %s-%s.tmp", dieSn.c_str(), diePartSn.c_str());
+					}
+
+					//char* result;
+					FILE* pPipe = _popen(cmdCommand, "r");
+					if (!pPipe) {
+						send(socketClient, "HTTP/1.1 404 Not Found\r\nConnection: close\r\nContent-type: text/html; charset=utf-8\r\n\r\n", 87, 0);
+						send(socketClient, "_popen fail!<br>", 18, 0);
+
+						qstr.clear();
+						qstrWorkSpacePath.clear();
+						free(httpData);
+						closesocket(socketClient);
+						printf("close socketClient!\n");
+						continue;
+					}
+
+					send(socketClient, "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-type: text/html; charset=utf-8\r\n\r\n", 80, 0);
+
+					while (!feof(pPipe)) {
+						if (fgets(popenBuffer, R7_STRING_SIZE, pPipe)) {
+							send(socketClient, popenBuffer, (int)strlen(popenBuffer), 0);
+						}
+					}
+					_pclose(pPipe);
+				}
+
 			}
 
 			//Test Get
@@ -659,6 +757,7 @@ extern "C"
 			free(httpData);
 			closesocket(socketClient);
 			printf("close socketClient!\n");
+			printf("----------------------------\n");
 		}
 
 		R7_SetVariableInt(r7Sn, functionSn, 1, res);
