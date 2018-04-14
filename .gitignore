@@ -30,10 +30,11 @@ library/A16/
 
 R7.log
 R8.log
+
 R7.license
+r7.license
 
 template.exe
-
 Qt_App_Template.exe
 
 *.r6t
