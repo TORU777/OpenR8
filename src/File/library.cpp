@@ -867,6 +867,8 @@ R7_API int R7Library_Init(void) {
 	R7_RegisterFunction("ReadTargetPathFromFiles", (R7Function_t)&Files_ReadTargetPathFromFiles); //Support old version function name
 	R7_RegisterFunction("Files_ReadFilesFromFolder", (R7Function_t)&Files_ReadFilesFromFolder);
 	R7_RegisterFunction("Files_ReadTargetPathFromFiles", (R7Function_t)&Files_ReadTargetPathFromFiles);
+	R7_RegisterFunction("File_ReadFilesFromFolder", (R7Function_t)&Files_ReadFilesFromFolder);
+	R7_RegisterFunction("File_ReadTargetPathFromFiles", (R7Function_t)&Files_ReadTargetPathFromFiles);
 		
 	return 1;
 }
@@ -1193,7 +1195,7 @@ R7_API int R7Library_GetSupportList(char *str, int strSize) {
 	function = json_object();
 	functionObject = json_object();
 	json_object_set_new(function, "function", functionObject);
-	json_object_set_new(functionObject, "name", json_string("Files_ReadFilesFromFolder"));
+	json_object_set_new(functionObject, "name", json_string("File_ReadFilesFromFolder"));
 	json_object_set_new(functionObject, "doc", json_string("http://www.openrobot.club/article/index?sn=10957"));
 	json_array_append(functionArray, function);
 	variableArray = json_array();
@@ -1207,7 +1209,7 @@ R7_API int R7Library_GetSupportList(char *str, int strSize) {
 	function = json_object();
 	functionObject = json_object();
 	json_object_set_new(function, "function", functionObject);
-	json_object_set_new(functionObject, "name", json_string("Files_ReadTargetPathFromFiles"));
+	json_object_set_new(functionObject, "name", json_string("File_ReadTargetPathFromFiles"));
 	json_object_set_new(functionObject, "doc", json_string("http://www.openrobot.club/article/index?sn=10958"));
 	json_array_append(functionArray, function);
 	variableArray = json_array();
