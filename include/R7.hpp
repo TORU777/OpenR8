@@ -119,10 +119,10 @@ extern "C"
 	R7_API int R7_GetVersion(char *str, int strSize);
 	R7_API int R7_GetLicense(char *str, int strSize);
 
-	typedef int(*R7CallbackHandler) (void *data);
-	R7_API int R7_QueueQtEvent(R7CallbackHandler r7CallbackHandler, void *data);
-	R7_API int R7_ProcessQtPendingEvents();
-	R7_API void *R7_GetQtApp();
+	typedef int(*R7CallbackHandler)(void *data);
+	R7_API int R7_QueueWxEvent(R7CallbackHandler r7CallbackHandler, void *data);
+	R7_API int R7_ProcessWxPendingEvents();
+	R7_API void *R7_GetWxApp();
 
 	R7_API int R7_IsCpuSupportAVX2();
 
