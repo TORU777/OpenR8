@@ -736,7 +736,7 @@ static int File_SaveBinary(int r7Sn, int functionSn) {
 	return 1;
 }
 
-static int Files_ReadFilesFromFolder(int r7Sn, int functionSn)
+static int File_ReadFilesFromFolder(int r7Sn, int functionSn)
 {
 
 	char folderPath[R7_STRING_SIZE];
@@ -829,7 +829,7 @@ static int Files_ReadFilesFromFolder(int r7Sn, int functionSn)
 	return 1;
 }
 
-static int Files_ReadTargetPathFromFiles(int r7Sn, int functionSn)
+static int File_ReadTargetPathFromFiles(int r7Sn, int functionSn)
 {
 
 	void *variableObject = NULL;
@@ -848,6 +848,35 @@ static int Files_ReadTargetPathFromFiles(int r7Sn, int functionSn)
 	return 1;
 }
 
+static int File_ShowR7Log(int r7Sn, int functionSn)
+{
+	wchar_t wexePath[1024];
+	GetModuleFileName(NULL, wexePath, 1024);
+	wstring r7LogPath = L"";
+	r7LogPath.assign(wexePath);
+	r7LogPath = r7LogPath.substr(0, r7LogPath.find_last_of(L"\\")) + L"\\R7.log";
+	//string stringExePath = r7_wstring_to_utf8(wstringExePath);
+	ShellExecute(NULL, L"open", L"notepad.exe", r7LogPath.c_str(), NULL, SW_SHOWNORMAL);
+	//ShellExecute(NULL, L"open", L"c:\\windows\\notepad.exe", L"c:\\outfile.txt", 0, SW_SHOW);
+	/*
+//	char exePath = R7_gete;
+	void *variableObject = NULL;
+	R7_GetVariableObject(r7Sn, functionSn, 1, &variableObject);
+	vector<string> *folderObject = ((vector<string>*)variableObject);
+	int num = 0;
+	R7_GetVariableInt(r7Sn, functionSn, 3, &num);
+	char filePath[R7_STRING_SIZE] = "";
+	string str;
+	if (folderObject != NULL && num < folderObject->size() && num >= 0) {
+		//str = r7_wstring_to_utf8(folderObject->at(num));
+		str = folderObject->at(num);
+		sprintf(filePath, "%s", str.c_str());
+	}
+	R7_SetVariableString(r7Sn, functionSn, 2, filePath);
+	*/
+	return 1;
+}
+
 R7_API int R7Library_Init(void) {
 	SetConsoleOutputCP(65001);
 	setlocale(LC_ALL, "en_US.UTF-8");
@@ -863,13 +892,13 @@ R7_API int R7Library_Init(void) {
 	R7_RegisterFunction("File_AddString", (R7Function_t)&File_AddString);
 	R7_RegisterFunction("File_DeleteDir", (R7Function_t)&File_DeleteDir);
 	R7_RegisterFunction("File_DeleteFile", (R7Function_t)&File_DeleteFile);
-	R7_RegisterFunction("ReadFilesFromFolder", (R7Function_t)&Files_ReadFilesFromFolder); //Support old version function name
-	R7_RegisterFunction("ReadTargetPathFromFiles", (R7Function_t)&Files_ReadTargetPathFromFiles); //Support old version function name
-	R7_RegisterFunction("Files_ReadFilesFromFolder", (R7Function_t)&Files_ReadFilesFromFolder);
-	R7_RegisterFunction("Files_ReadTargetPathFromFiles", (R7Function_t)&Files_ReadTargetPathFromFiles);
-	R7_RegisterFunction("File_ReadFilesFromFolder", (R7Function_t)&Files_ReadFilesFromFolder);
-	R7_RegisterFunction("File_ReadTargetPathFromFiles", (R7Function_t)&Files_ReadTargetPathFromFiles);
-		
+	R7_RegisterFunction("ReadFilesFromFolder", (R7Function_t)&File_ReadFilesFromFolder); //Support old version function name
+	R7_RegisterFunction("ReadTargetPathFromFiles", (R7Function_t)&File_ReadTargetPathFromFiles); //Support old version function name
+	R7_RegisterFunction("Files_ReadFilesFromFolder", (R7Function_t)&File_ReadFilesFromFolder); //Support old version function name
+	R7_RegisterFunction("Files_ReadTargetPathFromFiles", (R7Function_t)&File_ReadTargetPathFromFiles); //Support old version function name 
+	R7_RegisterFunction("File_ReadFilesFromFolder", (R7Function_t)&File_ReadFilesFromFolder);
+	R7_RegisterFunction("File_ReadTargetPathFromFiles", (R7Function_t)&File_ReadTargetPathFromFiles);
+	R7_RegisterFunction("File_ShowR7Log", (R7Function_t)&File_ShowR7Log);
 	return 1;
 }
 
@@ -1191,7 +1220,7 @@ R7_API int R7Library_GetSupportList(char *str, int strSize) {
 	json_object_set_new(variableObject, "direction", json_string("IN, FILE_PATH"));
 	json_array_append(variableArray, variable);
 
-	//Files_ReadFilesFromFolder
+	//File_ReadFilesFromFolder
 	function = json_object();
 	functionObject = json_object();
 	json_object_set_new(function, "function", functionObject);
@@ -1205,7 +1234,7 @@ R7_API int R7Library_GetSupportList(char *str, int strSize) {
 	r7_AppendVariable(variableArray, "folderPath", "String", "IN, FOLDER_PATH");
 	r7_AppendVariable(variableArray, "fileFilter", "String", "IN");//it can set null
 
-    //Files_ReadTargetPathFromFiles
+    //File_ReadTargetPathFromFiles
 	function = json_object();
 	functionObject = json_object();
 	json_object_set_new(function, "function", functionObject);
@@ -1217,6 +1246,18 @@ R7_API int R7Library_GetSupportList(char *str, int strSize) {
 	r7_AppendVariable(variableArray, "filesInFolder", "Object", "IN");
 	r7_AppendVariable(variableArray, "filePath", "String", "OUT");
 	r7_AppendVariable(variableArray, "fileSn", "Int", "IN");
+
+	//File_ShowR7Log
+	//open notepad.exe to show R7.log
+	function = json_object();
+	functionObject = json_object();
+	json_object_set_new(function, "function", functionObject);
+	json_object_set_new(functionObject, "name", json_string("File_ShowR7Log"));
+	json_object_set_new(functionObject, "doc", json_string(""));
+	json_array_append(functionArray, function);
+	variableArray = json_array();
+	json_object_set_new(functionObject, "variables", variableArray);
+
 
 	sprintf_s(str, strSize, "%s", json_dumps(root, 0));
 
