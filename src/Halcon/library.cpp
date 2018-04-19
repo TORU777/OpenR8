@@ -3,16 +3,15 @@ Copyright (c) 2004-2018 Open Robot Club. All rights reserved.
 Halcon library for R7.
 */
 
-
 #include <string>
 #include <sstream>
-
 
 #include "R7.hpp"
 #include <opencv2/opencv.hpp>
 
 #include "HalconCpp.h"
 #pragma comment(lib,"halconcpp.lib")
+
 
 using namespace cv;
 using namespace std;
@@ -28,16 +27,10 @@ typedef struct {
 } Halcon_t;
 
 
-
-
-
-
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-
 
 
 // reference: https://blog.csdn.net/lingtianyulong/article/details/54709130
@@ -138,7 +131,7 @@ HObject IplImageToHImage(cv::Mat& pImage)
 		GenImage1(&Hobj, "byte", width, height, (Hlong)(dataGray));
 		delete[] dataGray;
 	}
-	
+
 	return Hobj;
 }
 
@@ -164,7 +157,7 @@ static int Halcon_Init(int r7Sn, int functionSn) {
 	}
 
 	Halcon_t *halconPtr = ((Halcon_t*)variableObject);
-	//halconPtr->cv_ImageIn = Mat(Size(222, 222), CV_8UC3, Scalar(255, 0, 0));
+	
 	//initial values
 	halconPtr->cv_ImageIn = Mat();
 	halconPtr->cv_ImageOut = Mat();
@@ -196,7 +189,6 @@ static int Halcon_Resize(int r7Sn, int functionSn) {
 		return -3;
 	}
 
-	printf("Line: %d\n", __LINE__);
 	//cv::imshow("test", halconPtr->cv_ImageIn);
 	//cv::waitKey(0);
 
@@ -205,18 +197,14 @@ static int Halcon_Resize(int r7Sn, int functionSn) {
 		R7_Printf(r7Sn, "ERROR! R7_SetVariableMat = %d", res);
 		return -5;
 	}
-	cv::imshow("test2", halconPtr->cv_ImageIn);
-	cv::waitKey(0);
-
-	//imshow("halconPtr->cv_ImageIn", halconPtr->cv_ImageIn);
+	//cv::imshow("test2", halconPtr->cv_ImageIn);
+	//cv::waitKey(0);
 	
 	//Mat cv_image(100, 100, CV_8U, Scalar(100));
 	//HImage ho_Image;
-	printf("Line: %d\n", __LINE__);
 
 	halconPtr->ho_ImageIn = IplImageToHImage(halconPtr->cv_ImageIn);
 
-	printf("Line: %d\n", __LINE__);
 	//ho_Image = IplImageToHImage(cv_image);
 	//IplImageToHImage(cv_image);
 	//halconPtr->ho_ImageIn = IplImageToHImage(cv_image);
@@ -228,30 +216,22 @@ static int Halcon_Resize(int r7Sn, int functionSn) {
 		R7_Printf(r7Sn, "ERROR! R7_SetVariableDouble = %d", res);
 		return -5;
 	}
-	printf("Line: %d\n", __LINE__);
 
 	res = R7_GetVariableInt(r7Sn, functionSn, 4, &height);
 	if (res <= 0) {
 		R7_Printf(r7Sn, "ERROR! R7_SetVariableDouble = %d", res);
 		return -5;
 	}
-	printf("width = %d\n", width);
-	printf("height = %d\n", height);
 
 	if (width <= 0 || height <= 0)
 	{
 		R7_Printf(r7Sn, "ERROR! Width and height should be positive values.\n");
 		return -3;
 	}
-	printf("Line: %d\n", __LINE__);
 	
 	ZoomImageSize(halconPtr->ho_ImageIn, &(halconPtr->ho_ImageResize), width, height, "constant");
 
-	printf("Line: %d\n", __LINE__);
-
 	halconPtr->cv_ImageOut = HImageToIplImage(halconPtr->ho_ImageResize);
-
-	printf("Line: %d\n", __LINE__);
 
 	res = R7_SetVariableMat(r7Sn, functionSn, 5, halconPtr->cv_ImageOut);
 	if (res <= 0) {
@@ -259,7 +239,6 @@ static int Halcon_Resize(int r7Sn, int functionSn) {
 		return -5;
 	}
 	
-	printf("Line: %d\n", __LINE__);
 	return 1;
 }
 
