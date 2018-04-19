@@ -3,7 +3,7 @@
 # R7 version 18.21.0
 <?xml version="1.0" encoding="utf-8"?>
 <program>
-<version></version>
+<version>0.0.0</version>
 <functionSnMax>5</functionSnMax>
 <variableSnMax>7</variableSnMax>
 <functionSnCount>5</functionSnCount>
@@ -14,7 +14,7 @@
 <name>Halcon_Init</name>
 <posY>1</posY>
 <enable>1</enable>
-<remark>Please make sure to check the Halcon licence.</remark>
+<remark></remark>
 <variableSn>1</variableSn>
 </function>
 <function>
@@ -83,14 +83,14 @@
 <sn>4</sn>
 <name>imageFileName</name>
 <type>String</type>
-<value>lena.png</value>
+<value>D:\1_GitHub\OpenR8\workspace\Halcon\lena.png</value>
 <remark></remark>
 </variable>
 <variable>
 <sn>6</sn>
 <name>width</name>
 <type>Int</type>
-<value>500</value>
+<value>200</value>
 <remark></remark>
 </variable>
 <variable>
