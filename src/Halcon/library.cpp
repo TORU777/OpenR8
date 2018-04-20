@@ -279,7 +279,6 @@ inline void r7_AppendVariable(json_t *variableArray, const char *name, const cha
 
 R7_API int R7Library_GetSupportList(char *str, int strSize) {
 	// Define your functions and parameters in this API.
-	printf("Holcon: R7Library_GetSupportList \n");
 	json_t *root = json_object();
 	json_t *functionGroupArray;
 	json_t *functionGroup;
@@ -381,10 +380,6 @@ R7_API int R7Library_GetSupportList(char *str, int strSize) {
 	*/
 
 	sprintf_s(str, strSize, "%s", json_dumps(root, 0));
-
-	printf("Holcon: str =  %s \n", str);
-	printf("Holcon: json_dumps =  %s \n", json_dumps(root, 0));
-
 
 	json_decref(root);
 
